@@ -1,0 +1,72 @@
+// patient.proto
+syntax = "proto3";
+package patient;
+
+// Messages
+message Patient {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  string date_of_birth = 5;
+  string medical_record_number = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message CreatePatientRequest {
+  string name = 1;
+  string email = 2;
+  string phone = 3;
+  string date_of_birth = 4;
+  string medical_record_number = 5;
+}
+
+message GetPatientRequest {
+  string id = 1;
+}
+
+message GetPatientByEmailRequest {
+  string email = 1;
+}
+
+message UpdatePatientRequest {
+  string id = 1;
+  string name = 2;
+  string email = 3;
+  string phone = 4;
+  string date_of_birth = 5;
+  string medical_record_number = 6;
+}
+
+message DeletePatientRequest {
+  string id = 1;
+}
+
+message PatientResponse {
+  bool success = 1;
+  string message = 2;
+  Patient patient = 3;
+}
+
+message PatientsResponse {
+  bool success = 1;
+  repeated Patient patients = 2;
+}
+
+message OperationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Service
+service PatientService {
+  rpc CreatePatient(CreatePatientRequest) returns (PatientResponse);
+  rpc GetPatient(GetPatientRequest) returns (PatientResponse);
+  rpc GetPatientByEmail(GetPatientByEmailRequest) returns (PatientResponse);
+  rpc UpdatePatient(UpdatePatientRequest) returns (PatientResponse);
+  rpc DeletePatient(DeletePatientRequest) returns (OperationResponse);
+  rpc ListPatients(Empty) returns (PatientsResponse);
+}
+
+message Empty {}
