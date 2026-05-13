@@ -7,4 +7,5 @@ CREATE TABLE IF NOT EXISTS patients (
   medical_record_number TEXT UNIQUE,
   created_at TEXT DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  
 );

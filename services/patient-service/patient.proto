@@ -1,4 +1,4 @@
-// patient.proto
+//patient.proto
 syntax = "proto3";
 package patient;
 
@@ -47,6 +47,8 @@ message PatientResponse {
   bool success = 1;
   string message = 2;
   Patient patient = 3;
+
+
 }
 
 message PatientsResponse {
@@ -57,6 +59,7 @@ message PatientsResponse {
 message OperationResponse {
   bool success = 1;
   string message = 2;
+  
 }
 
 // Service
