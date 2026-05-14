@@ -3,6 +3,9 @@ const path = require('path');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const dbPromise = require('./db');
+require('dotenv').config();
+const { connectProducer, publishAppointmentConfirmed } = require('./kafka');
+// ... autres imports
 
 const PROTO_PATH = path.join(__dirname, 'rendezvous.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
@@ -16,6 +19,8 @@ const rdvService = {
       const inserted = await rdv.insert(newRdv);
       await persist(rdv);
       callback(null, { success: true, message: 'Rendez-vous réservé', appointment: inserted.toJSON() });
+      // Publier l'événement Kafka après la réservation réussie
+      publishAppointmentConfirmed(newRdv).catch(console.error);
     } catch (error) { callback({ code: grpc.status.INTERNAL, details: error.message }, null); }
   },
   GetAppointment: async (call, callback) => {
@@ -46,6 +51,7 @@ const rdvService = {
 };
 
 function main() {
+  await connectProducer();
   const server = new grpc.Server();
   server.addService(rdvProto.RendezVousService.service, rdvService);
   server.bindAsync('0.0.0.0:50052', grpc.ServerCredentials.createInsecure(), (err, port) => {
