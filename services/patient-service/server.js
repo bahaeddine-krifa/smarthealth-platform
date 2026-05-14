@@ -4,6 +4,9 @@ const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const sqlite3 = require('sqlite3').verbose();
 
+require('dotenv').config();
+const { connectProducer, publishPatientCreated } = require('./kafka');
+
 const PROTO_PATH = path.join(__dirname, 'patient.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
 const patientProto = grpc.loadPackageDefinition(packageDefinition).patient;
@@ -48,6 +51,7 @@ const patientService = {
       
       const patient = await query('SELECT * FROM patients WHERE id = ?', [id]);
       callback(null, { success: true, message: 'Patient créé', patient });
+      publishPatientCreated(patient).catch(console.error); // ✅ Fire-and-forget
     } catch (error) {
       callback({ code: grpc.status.INTERNAL, details: error.message }, null);
     }
@@ -87,7 +91,8 @@ const patientService = {
   }
 };
 
-function main() {
+async function main() {
+  await connectProducer(); // ✅ Initialise le producteur Kafka
   const server = new grpc.Server();
   server.addService(patientProto.PatientService.service, patientService);
   server.bindAsync('0.0.0.0:50051', grpc.ServerCredentials.createInsecure(), (err, port) => {
