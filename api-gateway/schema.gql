@@ -1,0 +1,59 @@
+type Patient {
+  id: ID!
+  name: String!
+  email: String!
+  phone: String
+  date_of_birth: String
+  medical_record_number: String
+  created_at: String
+  updated_at: String
+}
+
+type Appointment {
+  id: ID!
+  patient_id: String!
+  patient_name: String!
+  doctor_name: String!
+  appointment_date: String!
+  appointment_time: String!
+  reason: String
+  status: String!
+  created_at: String
+  updated_at: String
+}
+
+type Alert {
+  id: ID!
+  patient_id: String!
+  patient_name: String!
+  alert_type: String!
+  severity: String!
+  title: String!
+  description: String
+  status: String!
+  triggered_at: String
+  resolved_at: String
+}
+
+type Query {
+  patient(id: ID!): Patient
+  patients: [Patient]
+  appointment(id: ID!): Appointment
+  appointments: [Appointment]
+  alert(id: ID!): Alert
+  alerts: [Alert]
+}
+
+type Mutation {
+  createPatient(input: CreatePatientInput!): PatientResponse
+  bookAppointment(input: BookAppointmentInput!): AppointmentResponse
+  triggerAlert(input: TriggerAlertInput!): AlertResponse
+}
+
+input CreatePatientInput { name: String!, email: String!, phone: String, date_of_birth: String, medical_record_number: String }
+input BookAppointmentInput { patient_id: String!, patient_name: String!, doctor_name: String!, appointment_date: String!, appointment_time: String!, reason: String }
+input TriggerAlertInput { patient_id: String!, patient_name: String!, alert_type: String!, severity: String!, title: String!, description: String }
+
+type PatientResponse { success: Boolean!, message: String!, patient: Patient }
+type AppointmentResponse { success: Boolean!, message: String!, appointment: Appointment }
+type AlertResponse { success: Boolean!, message: String!, alert: Alert }
