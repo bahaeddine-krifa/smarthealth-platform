@@ -50,7 +50,7 @@ const rdvService = {
   }
 };
 
-function main() {
+async function main() {
   await connectProducer();
   const server = new grpc.Server();
   server.addService(rdvProto.RendezVousService.service, rdvService);
