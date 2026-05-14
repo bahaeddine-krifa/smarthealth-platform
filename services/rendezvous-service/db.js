@@ -12,13 +12,64 @@ const SNAPSHOT_FILE = path.join(DATA_DIR, 'rdv.snapshot.json');
 const rdvSchema = {
   title: 'rendezvous schema', version: 0, primaryKey: 'id', type: 'object',
   properties: {
-    id: { type: 'string', maxLength: 100 }, patient_id: { type: 'string' },
-    patient_name: { type: 'string' }, doctor_name: { type: 'string' },
-    appointment_date: { type: 'string' }, appointment_time: { type: 'string' },
-    reason: { type: 'string' },
-    status: { type: 'string', enum: ['pending', 'confirmed', 'cancelled', 'completed'] },
-    created_at: { type: 'string' }, updated_at: { type: 'string' }
-  },
+
+    id: {
+      type: 'string',
+      maxLength: 100
+    },
+
+    patient_id: {
+      type: 'string',
+      maxLength: 100
+    },
+
+    patient_name: {
+      type: 'string',
+      maxLength: 255
+    },
+
+    doctor_name: {
+      type: 'string',
+      maxLength: 255
+    },
+
+    appointment_date: {
+      type: 'string',
+      maxLength: 50
+    },
+
+    appointment_time: {
+      type: 'string',
+      maxLength: 50
+    },
+
+    reason: {
+      type: 'string',
+      maxLength: 500
+    },
+
+    status: {
+      type: 'string',
+      enum: [
+        'pending',
+        'confirmed',
+        'cancelled',
+        'completed'
+      ],
+      maxLength: 20
+    },
+
+    created_at: {
+      type: 'string',
+      maxLength: 100
+    },
+
+    updated_at: {
+      type: 'string',
+      maxLength: 100
+    }
+
+},
   required: ['id', 'patient_id', 'appointment_date', 'appointment_time', 'status'],
   indexes: ['patient_id', 'appointment_date']
 };
