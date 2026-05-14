@@ -3,6 +3,7 @@ const path = require('path');
 const grpc = require('@grpc/grpc-js');
 const protoLoader = require('@grpc/proto-loader');
 const sqlite3 = require('sqlite3').verbose();
+const { startConsumer } = require('./kafka');
 
 const PROTO_PATH = path.join(__dirname, 'alert.proto');
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, { keepCase: true, longs: String, enums: String, defaults: true, oneofs: true });
@@ -72,6 +73,8 @@ function main() {
   server.bindAsync('0.0.0.0:50053', grpc.ServerCredentials.createInsecure(), (err, port) => {
     if (err) { console.error('Erreur Alert Service:', err); return; }
     console.log(`✅ Alert Service gRPC + SQLite3 démarré sur le port ${port}`);
+    
+    startConsumer(); // ✅ Démarre le consommateur en arrière-plan
   });
 }
 main();
