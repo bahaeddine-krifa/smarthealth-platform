@@ -34,5 +34,17 @@
     "status": "pending",
     "created_at": "2026-05-14T14:15:34.727Z",
     "updated_at": "2026-05-14T14:15:34.727Z"
+  },
+  {
+    "id": "RDV-1778796505568",
+    "patient_id": "PAT-1778796160056",
+    "patient_name": "Kafka Test Patient",
+    "doctor_name": "Dr. Yassine",
+    "appointment_date": "2026-05-25",
+    "appointment_time": "14:30",
+    "reason": "Suivi Kafka",
+    "status": "pending",
+    "created_at": "2026-05-14T22:08:25.568Z",
+    "updated_at": "2026-05-14T22:08:25.568Z"
   }
 ]
