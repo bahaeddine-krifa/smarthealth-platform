@@ -1,4 +1,13 @@
+# docker-compose.yml - SmartHealth Platform v2.0
+# Architecture: 1 Gateway + 6 Microservices + Kafka (KRaft)
+# Ports: 4000 (Gateway), 50051-50059 (gRPC services), 9092 (Kafka)
+
+version: '3.8'
+
 services:
+  # =============================================================================
+  # 📡 KAFKA BROKER (Mode KRaft - Sans ZooKeeper)
+  # =============================================================================
   kafka:
     image: apache/kafka:4.2.0
     container_name: smarthealth-kafka
@@ -19,16 +28,323 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_LOG_RETENTION_HOURS: 24
     volumes:
       - kafka-data:/var/lib/kafka/data
     healthcheck:
-      # ✅ Utilisation du chemin complet + délai de démarrage allongé
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 20s
+    networks:
+      - smarthealth-net
 
+  # =============================================================================
+  # 🏥 MICROSERVICES (gRPC + SQLite/RxDB + Kafka)
+  # =============================================================================
+
+  # 🔹 Patient Service (Port 50051) - Yassine
+  patient-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/patient-service
+        SERVICE_PORT: 50051
+    container_name: patient-service
+    ports:
+      - "50051:50051"
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_CLIENT_ID=patient-service
+      - DB_PATH=/app/data/patients.db
+    volumes:
+      - ./services/patient-service:/app
+      - patient-data:/app/data
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+
+  # 🔹 Doctor Service (Port 50054) - Baha
+  doctor-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/doctor-service
+        SERVICE_PORT: 50054
+    container_name: doctor-service
+    ports:
+      - "50054:50054"
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_CLIENT_ID=doctor-service
+      - DB_PATH=/app/data/doctors.db
+    volumes:
+      - ./services/doctor-service:/app
+      - doctor-data:/app/data
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+
+  # 🔹 RendezVous Service (Port 50052) - Ahmed
+  rendezvous-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/rendezvous-service
+        SERVICE_PORT: 50052
+    container_name: rendezvous-service
+    ports:
+      - "50052:50052"
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_CLIENT_ID=rendezvous-service
+    volumes:
+      - ./services/rendezvous-service:/app
+      - rendezvous-data:/app/data
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+
+  # 🔹 Medical Record Service (Port 50056) - Yassine
+  medical-record-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/medical-record-service
+        SERVICE_PORT: 50056
+    container_name: medical-record-service
+    ports:
+      - "50056:50056"
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_CLIENT_ID=medical-record-service
+    volumes:
+      - ./services/medical-record-service:/app
+      - medical-record-data:/app/data
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+
+  # 🔹 Payment Service (Port 50055) - Baha
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/payment-service
+        SERVICE_PORT: 50055
+    container_name: payment-service
+    ports:
+      - "50055:50055"
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_CLIENT_ID=payment-service
+      - DB_PATH=/app/data/invoices.db
+    volumes:
+      - ./services/payment-service:/app
+      - payment-data:/app/data
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+
+  # 🔹 Inventory Service (Port 50057) - Yassine
+  inventory-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/inventory-service
+        SERVICE_PORT: 50057
+    container_name: inventory-service
+    ports:
+      - "50057:50057"
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_CLIENT_ID=inventory-service
+      - DB_PATH=/app/data/medications.db
+    volumes:
+      - ./services/inventory-service:/app
+      - inventory-data:/app/data
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+
+  # 🔹 Laboratory Service (Port 50058) - Ahmed
+  laboratory-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/laboratory-service
+        SERVICE_PORT: 50058
+    container_name: laboratory-service
+    ports:
+      - "50058:50058"
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_CLIENT_ID=laboratory-service
+      - DB_PATH=/app/data/tests.db
+    volumes:
+      - ./services/laboratory-service:/app
+      - laboratory-data:/app/data
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+
+  # 🔹 Notification Service (Port 50059) - Ahmed
+  notification-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/notification-service
+        SERVICE_PORT: 50059
+    container_name: notification-service
+    ports:
+      - "50059:50059"
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_CLIENT_ID=notification-service
+      - DB_PATH=/app/data/notifications.db
+      # Email config (optionnel - valeurs par défaut pour dev)
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=dev@smarthealth.test
+      - SMTP_PASS=dev_password_placeholder
+    volumes:
+      - ./services/notification-service:/app
+      - notification-data:/app/data
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+
+  # =============================================================================
+  # 🚀 API GATEWAY (Port 4000) - Baha
+  # =============================================================================
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    container_name: api-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - PORT=4000
+      # Connexion aux microservices via noms de conteneur Docker
+      - PATIENT_SERVICE_HOST=patient-service:50051
+      - DOCTOR_SERVICE_HOST=doctor-service:50054
+      - RENDEZVOUS_SERVICE_HOST=rendezvous-service:50052
+      - MEDICAL_RECORD_SERVICE_HOST=medical-record-service:50056
+      - PAYMENT_SERVICE_HOST=payment-service:50055
+      - INVENTORY_SERVICE_HOST=inventory-service:50057
+      - LABORATORY_SERVICE_HOST=laboratory-service:50058
+      - NOTIFICATION_SERVICE_HOST=notification-service:50059
+    volumes:
+      - ./api-gateway:/app
+    depends_on:
+      patient-service: { condition: service_started }
+      doctor-service: { condition: service_started }
+      rendezvous-service: { condition: service_started }
+      medical-record-service: { condition: service_started }
+      payment-service: { condition: service_started }
+      inventory-service: { condition: service_started }
+      laboratory-service: { condition: service_started }
+      notification-service: { condition: service_started }
+      kafka: { condition: service_healthy }
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # =============================================================================
+  # 📊 KAFKA UI (Optionnel - Monitoring) - Bonus Démo
+  # =============================================================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: smarthealth-kafka-ui
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: smarthealth-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9999
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    profiles:
+      - monitoring  # Lancez avec: docker compose --profile monitoring up -d
+
+# =============================================================================
+# 🗄️ VOLUMES PERSISTANTS (Données conservées entre redémarrages)
+# =============================================================================
 volumes:
   kafka-data:
     driver: local
+  patient-data:
+    driver: local
+  doctor-data:
+    driver: local
+  rendezvous-data:
+    driver: local
+  medical-record-data:
+    driver: local
+  payment-data:
+    driver: local
+  inventory-data:
+    driver: local
+  laboratory-data:
+    driver: local
+  notification-data:
+    driver: local
+
+# =============================================================================
+# 🌐 RÉSEAU ISOLÉ (Communication interne sécurisée)
+# =============================================================================
+networks:
+  smarthealth-net:
+    driver: bridge
