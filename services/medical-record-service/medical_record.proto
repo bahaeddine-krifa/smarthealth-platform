@@ -1,0 +1,32 @@
+syntax = "proto3";
+package medicalrecord;
+
+message MedicalRecord {
+  string id = 1;
+  string patient_id = 2;
+  string doctor_id = 3;
+  string diagnosis = 4;
+  string prescriptions = 5; // JSON string ou texte libre
+  string allergies = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message CreateRecordRequest { string patient_id = 1; string doctor_id = 2; string diagnosis = 3; string prescriptions = 4; string allergies = 5; }
+message GetRecordRequest { string id = 1; }
+message GetPatientHistoryRequest { string patient_id = 1; }
+message UpdateAllergiesRequest { string record_id = 1; string allergies = 2; }
+
+message RecordResponse { bool success = 1; string message = 2; MedicalRecord record = 3; }
+message RecordsResponse { bool success = 1; repeated MedicalRecord records = 2; }
+message OperationResponse { bool success = 1; string message = 2; }
+
+service MedicalRecordService {
+  rpc CreateRecord(CreateRecordRequest) returns (RecordResponse);
+  rpc GetRecord(GetRecordRequest) returns (RecordResponse);
+  rpc GetPatientHistory(GetPatientHistoryRequest) returns (RecordsResponse);
+  rpc UpdateAllergies(UpdateAllergiesRequest) returns (OperationResponse);
+  rpc ListRecords(Empty) returns (RecordsResponse);
+}
+
+message Empty {}

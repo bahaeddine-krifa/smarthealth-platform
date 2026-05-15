@@ -1,0 +1,33 @@
+syntax = "proto3";
+package inventory;
+
+message Medication {
+  string id = 1;
+  string name = 2;
+  string dosage = 3;
+  int32 stock_quantity = 4;
+  double price = 5;
+  string supplier = 6;
+  bool is_low_stock = 7;
+  string created_at = 8;
+}
+
+message AddMedicationRequest { string name = 1; string dosage = 2; int32 stock_quantity = 3; double price = 4; string supplier = 5; }
+message UpdateStockRequest { string id = 1; int32 quantity_change = 2; }
+message CheckAvailabilityRequest { string medication_id = 1; int32 requested_quantity = 2; }
+message ReserveMedicationRequest { string medication_id = 1; int32 quantity = 2; string prescription_id = 3; }
+
+message MedicationResponse { bool success = 1; string message = 2; Medication medication = 3; }
+message MedicationsResponse { bool success = 1; repeated Medication medications = 2; }
+message AvailabilityResponse { bool success = 1; bool available = 2; int32 remaining_stock = 3; }
+message OperationResponse { bool success = 1; string message = 2; }
+
+service InventoryService {
+  rpc AddMedication(AddMedicationRequest) returns (MedicationResponse);
+  rpc UpdateStock(UpdateStockRequest) returns (OperationResponse);
+  rpc CheckAvailability(CheckAvailabilityRequest) returns (AvailabilityResponse);
+  rpc GetLowStockMedications(Empty) returns (MedicationsResponse);
+  rpc ReserveMedication(ReserveMedicationRequest) returns (OperationResponse);
+}
+
+message Empty {}
