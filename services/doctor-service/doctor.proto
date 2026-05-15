@@ -1,0 +1,32 @@
+syntax = "proto3";
+package doctor;
+
+message Doctor {
+  string id = 1;
+  string name = 2;
+  string specialty = 3;
+  string email = 4;
+  string phone = 5;
+  string cabinet_location = 6;
+  bool is_available = 7;
+  string created_at = 8;
+}
+
+message CreateDoctorRequest { string name = 1; string specialty = 2; string email = 3; string phone = 4; string cabinet_location = 5; }
+message GetDoctorRequest { string id = 1; }
+message SearchDoctorsRequest { string specialty = 1; }
+message UpdateAvailabilityRequest { string id = 1; bool is_available = 2; }
+
+message DoctorResponse { bool success = 1; string message = 2; Doctor doctor = 3; }
+message DoctorsResponse { bool success = 1; repeated Doctor doctors = 2; }
+message OperationResponse { bool success = 1; string message = 2; }
+
+service DoctorService {
+  rpc CreateDoctor(CreateDoctorRequest) returns (DoctorResponse);
+  rpc GetDoctor(GetDoctorRequest) returns (DoctorResponse);
+  rpc SearchDoctors(SearchDoctorsRequest) returns (DoctorsResponse);
+  rpc UpdateAvailability(UpdateAvailabilityRequest) returns (OperationResponse);
+  rpc ListDoctors(Empty) returns (DoctorsResponse);
+}
+
+message Empty {}
