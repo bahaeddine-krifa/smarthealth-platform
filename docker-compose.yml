@@ -2,7 +2,6 @@
 # Architecture: 1 Gateway + 6 Microservices + Kafka (KRaft)
 # Ports: 4000 (Gateway), 50051-50059 (gRPC services), 9092 (Kafka)
 
-version: '3.8'
 
 services:
   # =============================================================================
@@ -62,6 +61,7 @@ services:
       - DB_PATH=/app/data/patients.db
     volumes:
       - ./services/patient-service:/app
+      - /app/node_modules 
       - patient-data:/app/data
     depends_on:
       kafka:
@@ -88,6 +88,7 @@ services:
       - DB_PATH=/app/data/doctors.db
     volumes:
       - ./services/doctor-service:/app
+      - /app/node_modules 
       - doctor-data:/app/data
     depends_on:
       kafka:
@@ -113,6 +114,7 @@ services:
       - KAFKA_CLIENT_ID=rendezvous-service
     volumes:
       - ./services/rendezvous-service:/app
+      - /app/node_modules 
       - rendezvous-data:/app/data
     depends_on:
       kafka:
@@ -138,6 +140,7 @@ services:
       - KAFKA_CLIENT_ID=medical-record-service
     volumes:
       - ./services/medical-record-service:/app
+      - /app/node_modules
       - medical-record-data:/app/data
     depends_on:
       kafka:
@@ -164,6 +167,7 @@ services:
       - DB_PATH=/app/data/invoices.db
     volumes:
       - ./services/payment-service:/app
+      - /app/node_modules
       - payment-data:/app/data
     depends_on:
       kafka:
@@ -190,6 +194,7 @@ services:
       - DB_PATH=/app/data/medications.db
     volumes:
       - ./services/inventory-service:/app
+      - /app/node_modules
       - inventory-data:/app/data
     depends_on:
       kafka:
@@ -216,6 +221,7 @@ services:
       - DB_PATH=/app/data/tests.db
     volumes:
       - ./services/laboratory-service:/app
+      - /app/node_modules
       - laboratory-data:/app/data
     depends_on:
       kafka:
@@ -247,7 +253,35 @@ services:
       - SMTP_PASS=dev_password_placeholder
     volumes:
       - ./services/notification-service:/app
+      - /app/node_modules
       - notification-data:/app/data
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - smarthealth-net
+    restart: unless-stopped
+
+    # 🔹 Alert Service (Port 50053) - Ahmed
+  alert-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_DIR: services/alert-service
+        SERVICE_PORT: 50053
+    container_name: alert-service
+    ports:
+      - "50053:50053"
+    environment:
+      - NODE_ENV=development
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_CLIENT_ID=alert-service
+      - DB_PATH=/app/data/alerts.db
+    volumes:
+      - ./services/alert-service:/app
+      - /app/node_modules
+      - alert-data:/app/data
     depends_on:
       kafka:
         condition: service_healthy
@@ -279,6 +313,7 @@ services:
       - NOTIFICATION_SERVICE_HOST=notification-service:50059
     volumes:
       - ./api-gateway:/app
+      - /app/node_modules
     depends_on:
       patient-service: { condition: service_started }
       doctor-service: { condition: service_started }
@@ -340,6 +375,8 @@ volumes:
   laboratory-data:
     driver: local
   notification-data:
+    driver: local
+  alert-data:
     driver: local
 
 # =============================================================================
