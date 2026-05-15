@@ -1,3 +1,4 @@
+# ==================== TYPES ====================
 type Patient {
   id: ID!
   name: String!
@@ -7,6 +8,17 @@ type Patient {
   medical_record_number: String
   created_at: String
   updated_at: String
+}
+
+type Doctor {
+  id: ID!
+  name: String!
+  specialty: String!
+  email: String!
+  phone: String
+  cabinet_location: String
+  is_available: Boolean!
+  created_at: String
 }
 
 type Appointment {
@@ -22,6 +34,60 @@ type Appointment {
   updated_at: String
 }
 
+type MedicalRecord {
+  id: ID!
+  patient_id: String!
+  doctor_id: String!
+  diagnosis: String!
+  prescriptions: String
+  allergies: String
+  created_at: String
+  updated_at: String
+}
+
+type Invoice {
+  id: ID!
+  patient_id: String!
+  appointment_id: String!
+  amount: Float!
+  currency: String!
+  status: String!
+  created_at: String
+  paid_at: String
+}
+
+type Medication {
+  id: ID!
+  name: String!
+  dosage: String!
+  stock_quantity: Int!
+  price: Float!
+  supplier: String
+  is_low_stock: Boolean!
+  created_at: String
+}
+
+type LabTest {
+  id: ID!
+  patient_id: String!
+  test_type: String!
+  status: String!
+  result_data: String
+  is_abnormal: Boolean!
+  created_at: String
+  completed_at: String
+}
+
+type Notification {
+  id: ID!
+  user_id: String!
+  channel: String!
+  subject: String!
+  body: String!
+  status: String!
+  sent_at: String
+}
+
 type Alert {
   id: ID!
   patient_id: String!
@@ -35,25 +101,144 @@ type Alert {
   resolved_at: String
 }
 
+# ==================== QUERIES ====================
 type Query {
+  # Patient
   patient(id: ID!): Patient
   patients: [Patient]
+  
+  # Doctor
+  doctor(id: ID!): Doctor
+  doctors(specialty: String): [Doctor]
+  
+  # Appointment
   appointment(id: ID!): Appointment
   appointments: [Appointment]
+  
+  # Medical Record
+  medicalRecord(id: ID!): MedicalRecord
+  medicalRecords(patient_id: String): [MedicalRecord]
+  
+  # Payment
+  invoice(id: ID!): Invoice
+  invoices(patient_id: String): [Invoice]
+  
+  # Inventory
+  medication(id: ID!): Medication
+  medications(low_stock: Boolean): [Medication]
+  
+  # Laboratory
+  labTest(id: ID!): LabTest
+  labTests(patient_id: String): [LabTest]
+  
+  # Notification
+  notification(id: ID!): Notification
+  notifications(user_id: String): [Notification]
+  
+  # Alert
   alert(id: ID!): Alert
-  alerts: [Alert]
+  alerts(patient_id: String): [Alert]
 }
 
+# ==================== MUTATIONS ====================
 type Mutation {
-  createPatient(input: CreatePatientInput!): PatientResponse
-  bookAppointment(input: BookAppointmentInput!): AppointmentResponse
-  triggerAlert(input: TriggerAlertInput!): AlertResponse
+  # Patient
+  createPatient(input: CreatePatientInput!): Patient
+  
+  # Doctor
+  createDoctor(input: CreateDoctorInput!): Doctor
+  
+  # Appointment
+  bookAppointment(input: BookAppointmentInput!): Appointment
+  
+  # Medical Record
+  createMedicalRecord(input: CreateRecordInput!): MedicalRecord
+  
+  # Payment
+  createInvoice(input: CreateInvoiceInput!): Invoice
+  processPayment(invoice_id: ID!, method: String!): String
+  
+  # Inventory
+  addMedication(input: AddMedicationInput!): Medication
+  reserveMedication(id: ID!, quantity: Int!): String
+  
+  # Laboratory
+  createLabTest(input: CreateTestInput!): LabTest
+  addTestResult(test_id: ID!, data: String!, abnormal: Boolean!): LabTest
+  
+  # Notification
+  sendNotification(input: SendNotificationInput!): Notification
+  
+  # Alert
+ triggerAlert(input: TriggerAlertInput!): Alert
 }
 
-input CreatePatientInput { name: String!, email: String!, phone: String, date_of_birth: String, medical_record_number: String }
-input BookAppointmentInput { patient_id: String!, patient_name: String!, doctor_name: String!, appointment_date: String!, appointment_time: String!, reason: String }
-input TriggerAlertInput { patient_id: String!, patient_name: String!, alert_type: String!, severity: String!, title: String!, description: String }
+# ==================== INPUTS ====================
+input CreatePatientInput {
+  name: String!
+  email: String!
+  phone: String
+  date_of_birth: String
+  medical_record_number: String
+}
 
-type PatientResponse { success: Boolean!, message: String!, patient: Patient }
-type AppointmentResponse { success: Boolean!, message: String!, appointment: Appointment }
-type AlertResponse { success: Boolean!, message: String!, alert: Alert }
+input CreateDoctorInput {
+  name: String!
+  specialty: String!
+  email: String!
+  phone: String
+  cabinet_location: String
+}
+
+input BookAppointmentInput {
+  patient_id: String!
+  patient_name: String!
+  doctor_name: String!
+  appointment_date: String!
+  appointment_time: String!
+  reason: String
+}
+
+input CreateRecordInput {
+  patient_id: String!
+  doctor_id: String!
+  diagnosis: String!
+  prescriptions: String
+  allergies: String
+}
+
+input CreateInvoiceInput {
+  patient_id: String!
+  appointment_id: String!
+  amount: Float!
+  currency: String
+}
+
+input AddMedicationInput {
+  name: String!
+  dosage: String!
+  stock_quantity: Int!
+  price: Float!
+  supplier: String
+}
+
+input CreateTestInput {
+  patient_id: String!
+  test_type: String!
+}
+
+input SendNotificationInput {
+  user_id: String!
+  channel: String!
+  subject: String!
+  body: String!
+}
+
+input TriggerAlertInput {
+  patient_id: String!
+  patient_name: String!
+  alert_type: String!
+  severity: String!
+  title: String!
+  description: String
+}
