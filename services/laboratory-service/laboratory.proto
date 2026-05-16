@@ -1,32 +1,42 @@
 syntax = "proto3";
 package laboratory;
 
+// 1. Messages de base
 message LabTest {
   string id = 1;
   string patient_id = 2;
-  string test_type = 3; // blood, urine, xray, etc.
-  string status = 4; // scheduled, in_progress, completed, flagged
-  string result_data = 5; // JSON ou texte
+  string test_type = 3;
+  string status = 4;
+  string result_data = 5;
   bool is_abnormal = 6;
   string created_at = 7;
   string completed_at = 8;
 }
 
+// 2. Message utilitaire (déclaré AVANT le service)
+message Empty {}
+
+// 3. Messages de Requêtes
 message CreateTestRequest { string patient_id = 1; string test_type = 2; }
 message ScheduleTestRequest { string test_id = 1; string scheduled_date = 2; }
 message AddTestResultRequest { string test_id = 1; string result_data = 2; bool is_abnormal = 3; }
 message GetTestResultsRequest { string patient_id = 1; }
 
+message GetTestRequest { string id = 1; }
+
+// 4. Messages de Réponses
 message TestResponse { bool success = 1; string message = 2; LabTest test = 3; }
 message TestsResponse { bool success = 1; repeated LabTest tests = 2; }
 message OperationResponse { bool success = 1; string message = 2; }
 
+// 5. Service gRPC
 service LaboratoryService {
   rpc CreateTest(CreateTestRequest) returns (TestResponse);
   rpc ScheduleTest(ScheduleTestRequest) returns (OperationResponse);
   rpc AddTestResult(AddTestResultRequest) returns (TestResponse);
+  
+  rpc GetTest(GetTestRequest) returns (TestResponse);
+  
   rpc GetTestResults(GetTestResultsRequest) returns (TestsResponse);
   rpc ListTests(Empty) returns (TestsResponse);
 }
-
-message Empty {}
