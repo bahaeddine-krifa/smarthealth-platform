@@ -128,12 +128,19 @@ const inventoryService = {
   },
   GetLowStockMedications: async (_, cb) => {
     try {
-      cb(null, {
-        success: true,
-        medications: await all(
-          "SELECT * FROM medications WHERE is_low_stock=1",
-        ),
-      });
+      // SQLite stocke les booléens en 0/1. On filtre explicitement.
+      const meds = await all("SELECT * FROM medications WHERE is_low_stock = 1");
+      // Retourne toujours un tableau, jamais null
+      cb(null, { success: true, medications: meds || [] });
+    } catch (e) {
+      console.error("❌ GetLowStockMedications error:", e);
+      cb({ code: grpc.status.INTERNAL, details: e.message }, null);
+    }
+  },
+  ListMedications: async (_, cb) => {
+    try {
+      const meds = await all("SELECT * FROM medications");
+      cb(null, { success: true, medications: meds || [] });
     } catch (e) {
       cb({ code: grpc.status.INTERNAL, details: e.message }, null);
     }

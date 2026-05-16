@@ -51,6 +51,20 @@ const labService = {
     try { const tests = await all('SELECT * FROM lab_tests WHERE patient_id=?', [call.request.patient_id]); cb(null, { success: true, tests }); }
     catch(e) { cb({ code: grpc.status.INTERNAL, details: e.message }, null); }
   },
+  GetTest: async (call, cb) => {
+    try {
+      const test = await query('SELECT * FROM lab_tests WHERE id=?', [call.request.id]);
+      if (!test) {
+        return cb({ 
+          code: grpc.status.NOT_FOUND, 
+          details: 'Lab test not found' 
+        }, null);
+      }
+      cb(null, { success: true, message: 'Test found', test });
+    } catch (e) {
+      cb({ code: grpc.status.INTERNAL, details: e.message }, null);
+    }
+  },
   ListTests: async (_, cb) => {
     try { cb(null, { success: true, tests: await all('SELECT * FROM lab_tests') }); }
     catch(e) { cb({ code: grpc.status.INTERNAL, details: e.message }, null); }

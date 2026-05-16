@@ -89,28 +89,150 @@ async function startGateway() {
   // ===========================================================================
   // 💊 INVENTORY / MEDICATIONS (50057)
   // ===========================================================================
-  app.post('/api/medications', async (req, res) => { try { res.status(201).json((await grpcCall(clients.inventoryClient, 'AddMedication', req.body)).medication); } catch(e) { handleRestError(e, res); } });
-  app.get('/api/medications/:id', async (req, res) => { try { res.json((await grpcCall(clients.inventoryClient, 'GetMedication', { id: req.params.id })).medication); } catch(e) { handleRestError(e, res); } });
-  app.get('/api/medications/low-stock', async (req, res) => { try { res.json((await grpcCall(clients.inventoryClient, 'GetLowStockMedications', {})).medications); } catch(e) { handleRestError(e, res); } });
-  app.put('/api/medications/:id/stock', async (req, res) => { try { await grpcCall(clients.inventoryClient, 'UpdateStock', { id: req.params.id, quantity_change: req.body.quantity_change }); res.json({ success: true }); } catch(e) { handleRestError(e, res); } });
-  app.post('/api/medications/:id/reserve', async (req, res) => { try { await grpcCall(clients.inventoryClient, 'ReserveMedication', { medication_id: req.params.id, quantity: req.body.quantity || 1 }); res.json({ success: true }); } catch(e) { handleRestError(e, res); } });
+  // 1. Routes SPÉCIFIQUES d'abord (avant les routes avec :id)
+  app.get('/api/medications/low-stock', async (req, res) => {
+    try {
+      const response = await grpcCall(clients.inventoryClient, 'GetLowStockMedications', {});
+      if (!response || !response.medications) return res.json([]);
+      res.json(response.medications);
+    } catch(e) { handleRestError(e, res); }
+  });
+  
+  app.put('/api/medications/:id/stock', async (req, res) => {
+    try {
+      await grpcCall(clients.inventoryClient, 'UpdateStock', { id: req.params.id, quantity_change: req.body.quantity_change });
+      res.json({ success: true });
+    } catch(e) { handleRestError(e, res); }
+  });
+  
+  app.post('/api/medications/:id/reserve', async (req, res) => {
+    try {
+      await grpcCall(clients.inventoryClient, 'ReserveMedication', { medication_id: req.params.id, quantity: req.body.quantity || 1 });
+      res.json({ success: true });
+    } catch(e) { handleRestError(e, res); }
+  });
+  
+  // 2. Route paramétrée ENSUITE
+  app.get('/api/medications/:id', async (req, res) => {
+    try {
+      res.json((await grpcCall(clients.inventoryClient, 'GetMedication', { id: req.params.id })).medication);
+    } catch(e) { handleRestError(e, res); }
+  });
+  
+  // 3. Route liste en dernier (ou avant la paramétrée si pas de conflit)
+  app.get('/api/medications', async (req, res) => {
+    try {
+      const response = await grpcCall(clients.inventoryClient, 'ListMedications', {});
+      res.json(response.medications);
+    } catch(e) { handleRestError(e, res); }
+  });
+  
+  app.post('/api/medications', async (req, res) => {
+    try {
+      res.status(201).json((await grpcCall(clients.inventoryClient, 'AddMedication', req.body)).medication);
+    } catch(e) { handleRestError(e, res); }
+  });
 
   // ===========================================================================
   //  LABORATORY TESTS (50058)
   // ===========================================================================
-  app.post('/api/lab-tests', async (req, res) => { try { res.status(201).json((await grpcCall(clients.laboratoryClient, 'CreateTest', req.body)).test); } catch(e) { handleRestError(e, res); } });
-  app.get('/api/lab-tests/:id', async (req, res) => { try { res.json((await grpcCall(clients.laboratoryClient, 'GetTest', { id: req.params.id })).test); } catch(e) { handleRestError(e, res); } });
-  app.get('/api/lab-tests/patient/:patient_id', async (req, res) => { try { res.json((await grpcCall(clients.laboratoryClient, 'GetTestResults', { patient_id: req.params.patient_id })).tests); } catch(e) { handleRestError(e, res); } });
-  app.put('/api/lab-tests/:id/result', async (req, res) => { try { const resp = await grpcCall(clients.laboratoryClient, 'AddTestResult', { test_id: req.params.id, result_data: req.body.data, is_abnormal: req.body.abnormal || false }); res.json(resp.test); } catch(e) { handleRestError(e, res); } });
-
+  // 1. Route pour lister TOUS les tests (NOUVEAU - à placer AVANT /:id)
+  app.get('/api/lab-tests', async (req, res) => { 
+    try { 
+      const response = await grpcCall(clients.laboratoryClient, 'ListTests', {});
+      res.json(response.tests); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
+  
+  // 2. Route paramétrée (déjà existante - doit rester APRÈS la route liste)
+  app.get('/api/lab-tests/:id', async (req, res) => { 
+    try { 
+      res.json((await grpcCall(clients.laboratoryClient, 'GetTest', { id: req.params.id })).test); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
+  
+  // 3. Autres routes existantes...
+  app.post('/api/lab-tests', async (req, res) => { 
+    try { 
+      res.status(201).json((await grpcCall(clients.laboratoryClient, 'CreateTest', req.body)).test); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
+  
+  app.get('/api/lab-tests/patient/:patient_id', async (req, res) => { 
+    try { 
+      res.json((await grpcCall(clients.laboratoryClient, 'GetTestResults', { patient_id: req.params.patient_id })).tests); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
+  
+  app.put('/api/lab-tests/:id/result', async (req, res) => { 
+    try { 
+      const resp = await grpcCall(clients.laboratoryClient, 'AddTestResult', { 
+        test_id: req.params.id, 
+        result_data: req.body.data, 
+        is_abnormal: req.body.abnormal || false 
+      }); 
+      res.json(resp.test); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
   // ===========================================================================
   // 🔔 NOTIFICATIONS (50059)
   // ===========================================================================
-  app.post('/api/notifications/email', async (req, res) => { try { res.status(201).json((await grpcCall(clients.notificationClient, 'SendEmail', req.body)).notification); } catch(e) { handleRestError(e, res); } });
-  app.post('/api/notifications/sms', async (req, res) => { try { res.status(201).json((await grpcCall(clients.notificationClient, 'SendSMS', req.body)).notification); } catch(e) { handleRestError(e, res); } });
-  app.get('/api/notifications/:id', async (req, res) => { try { res.json((await grpcCall(clients.notificationClient, 'GetNotification', { id: req.params.id })).notification); } catch(e) { handleRestError(e, res); } });
-  app.get('/api/notifications/user/:user_id', async (req, res) => { try { res.json((await grpcCall(clients.notificationClient, 'GetHistory', { user_id: req.params.user_id })).notifications); } catch(e) { handleRestError(e, res); } });
-
+  // 1. Routes SPÉCIFIQUES d'abord (avant les routes avec :id)
+  app.post('/api/notifications/email', async (req, res) => { 
+    try { 
+      const response = await grpcCall(clients.notificationClient, 'SendEmail', req.body);
+      res.status(201).json(response); 
+    } catch(e) { handleRestError(e, res); } 
+  });
+  
+  app.post('/api/notifications/sms', async (req, res) => { 
+    try { 
+      const response = await grpcCall(clients.notificationClient, 'SendSMS', req.body);
+      res.status(201).json(response); 
+    } catch(e) { handleRestError(e, res); } 
+  });
+  
+  app.post('/api/notifications/push', async (req, res) => { 
+    try { 
+      const response = await grpcCall(clients.notificationClient, 'SendPush', req.body);
+      res.status(201).json(response); 
+    } catch(e) { handleRestError(e, res); } 
+  });
+  
+  // 2. Route pour lister les notifications d'un utilisateur spécifique
+  app.get('/api/notifications/user/:user_id', async (req, res) => { 
+    try { 
+      const response = await grpcCall(clients.notificationClient, 'GetHistory', { user_id: req.params.user_id });
+      res.json(response.notifications); 
+    } catch(e) { handleRestError(e, res); } 
+  });
+  
+  // 3. Route pour lister TOUTES les notifications (NOUVEAU)
+  app.get('/api/notifications', async (req, res) => { 
+    try { 
+      const response = await grpcCall(clients.notificationClient, 'ListNotifications', {});
+      res.json(response.notifications); 
+    } catch(e) { handleRestError(e, res); } 
+  });
+  
+  // 4. Route paramétrée (DOIT ÊTRE EN DERNIER pour ne pas capturer les routes spécifiques)
+  app.get('/api/notifications/:id', async (req, res) => { 
+    try { 
+      const response = await grpcCall(clients.notificationClient, 'GetNotification', { id: req.params.id });
+      res.json(response.notification); 
+    } catch(e) { handleRestError(e, res); } 
+  });
+  
   // ===========================================================================
   // 🚨 ALERTS (50053)
   // ===========================================================================
