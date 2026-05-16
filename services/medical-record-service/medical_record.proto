@@ -16,6 +16,7 @@ message CreateRecordRequest { string patient_id = 1; string doctor_id = 2; strin
 message GetRecordRequest { string id = 1; }
 message GetPatientHistoryRequest { string patient_id = 1; }
 message UpdateAllergiesRequest { string record_id = 1; string allergies = 2; }
+message ListRecordsRequest {}
 
 message RecordResponse { bool success = 1; string message = 2; MedicalRecord record = 3; }
 message RecordsResponse { bool success = 1; repeated MedicalRecord records = 2; }

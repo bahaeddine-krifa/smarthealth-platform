@@ -73,10 +73,50 @@ async function startGateway() {
   // ===========================================================================
   // 📋 MEDICAL RECORDS (50056)
   // ===========================================================================
-  app.post('/api/records', async (req, res) => { try { res.status(201).json((await grpcCall(clients.medicalRecordClient, 'CreateRecord', req.body)).record); } catch(e) { handleRestError(e, res); } });
-  app.get('/api/records/:id', async (req, res) => { try { res.json((await grpcCall(clients.medicalRecordClient, 'GetRecord', { id: req.params.id })).record); } catch(e) { handleRestError(e, res); } });
-  app.get('/api/records/patient/:patient_id', async (req, res) => { try { res.json((await grpcCall(clients.medicalRecordClient, 'GetPatientHistory', { patient_id: req.params.patient_id })).records); } catch(e) { handleRestError(e, res); } });
-  app.put('/api/records/:id/allergies', async (req, res) => { try { await grpcCall(clients.medicalRecordClient, 'UpdateAllergies', { record_id: req.params.id, ...req.body }); res.json({ success: true }); } catch(e) { handleRestError(e, res); } });
+  // 1. Route pour lister TOUS les dossiers (NOUVEAU - À PLACER AVANT /:id)
+  app.get('/api/records', async (req, res) => { 
+    try { 
+      const response = await grpcCall(clients.medicalRecordClient, 'ListRecords', {});
+      res.json(response.records); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
+  
+  // 2. Route paramétrée (DOIT RESTER APRÈS la route liste)
+  app.get('/api/records/:id', async (req, res) => { 
+    try { 
+      res.json((await grpcCall(clients.medicalRecordClient, 'GetRecord', { id: req.params.id })).record); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
+  
+  // 3. Autres routes existantes...
+  app.post('/api/records', async (req, res) => { 
+    try { 
+      res.status(201).json((await grpcCall(clients.medicalRecordClient, 'CreateRecord', req.body)).record); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
+  
+  app.get('/api/records/patient/:patient_id', async (req, res) => { 
+    try { 
+      res.json((await grpcCall(clients.medicalRecordClient, 'GetPatientHistory', { patient_id: req.params.patient_id })).records); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
+  
+  app.put('/api/records/:id/allergies', async (req, res) => { 
+    try { 
+      await grpcCall(clients.medicalRecordClient, 'UpdateAllergies', { record_id: req.params.id, ...req.body }); 
+      res.json({ success: true }); 
+    } catch(e) { 
+      handleRestError(e, res); 
+    } 
+  });
 
   // ===========================================================================
   // 💰 PAYMENTS & INVOICES (50055)
