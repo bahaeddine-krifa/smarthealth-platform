@@ -4,6 +4,8 @@
   "description": "",
   "main": "kafka.js",
   "dependencies": {
+    "@grpc/grpc-js": "^1.14.3",
+    "@grpc/proto-loader": "^0.8.1",
     "abbrev": "^4.0.0",
     "base64-js": "^1.5.1",
     "bindings": "^1.5.0",
