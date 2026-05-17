@@ -3,53 +3,6 @@
 
 
 
-
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              FRONTEND (React)                               │
-│                                     │                                       │
-│                         REST / GraphQL (Port 4000)                          │
-│                                     ↓                                       │
-│ ┌───────────────────────────────────────────────────────────────────────┐   │
-│ │                         API GATEWAY (Express + Apollo)                │   │
-│ │  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────────┐    │   │
-│ │  │  REST API   │    │  GraphQL    │    │   Health Check (/health)│    │   │
-│ │  │  /api/*     │    │  /graphql   │    └─────────────────────────┘    │   │
-│ │  └─────────────┘    └─────────────┘                                   │   │
-│ └─────────────────────────────────┬─────────────────────────────────────┘   │
-│                                   │ gRPC                                    │
-│         ┌─────────────────────────┼─────────────────────────┐               │
-│         ↓                         ↓                         ↓               │
-│ ┌───────────────┐    ┌───────────────┐    ┌───────────────┐                 │
-│ │Patient Service│    │ Doctor Service│    │RendezVous Svc │                 │
-│ │    :50051     │    │    :50054     │    │    :50052     │                 │
-│ │   (SQLite3)   │    │   (SQLite3)   │    │   (SQLite3)   │                 │
-│ └───────┬───────┘    └───────┬───────┘    └───────┬───────┘                 │
-│         │                    │                    │                         │
-│         └────────────────────┼────────────────────┘                         │
-│                              │ Kafka (Asynchrone)                           │
-│                              ↓                                              │
-│ ┌───────────────────────────────────────────────────────────────────────┐   │
-│ │                         KAFKA BROKER (Port 9092)                      │   │
-│ │  Topics: patient.created | appointment.confirmed | payment.completed  │   │
-│ │          record.created  | stock.low | alert.triggered |... (10 topics)│  │
-│ └───────────────────────────────────────────────────────────────────────┘   │
-│                              │                                              │
-│     ┌────────────────────────┼────────────────────────┐                     │
-│     ↓                        ↓                        ↓                     │
-│ ┌───────────────┐    ┌───────────────┐    ┌───────────────┐                 │
-│ │Notification Svc│   │MedicalRecord  |    │ Payment Svc   │                 │
-│ │    :50059     │    │ Svc :50056    │    │   :50055      │                 │
-│ │   (SQLite3)   │    │   (RxDB)      │    │  (SQLite3)    │                 │
-│ └───────────────┘    └───────────────┘    └───────────────┘                 │
-│                                                                             │
-│ ┌───────────────┐    ┌───────────────┐    ┌───────────────┐                 │
-│ │Inventory Svc  │    │Laboratory Svc │    │ Alert Svc     │                 │
-│ │   :50057      │    │   :50058      │    │   :50053      │                 │
-│ │  (SQLite3)    │    │  (SQLite3)    │    │  (SQLite3)    │                 │
-│ └───────────────┘    └───────────────┘    └───────────────┘                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-
 ![alt text](image.png)
 
 * 🚀 Technologies utilisées
@@ -141,28 +94,7 @@ node api-gateway/test-grpc.js
 
 
 
-
-* 📁 Structure du projet
-text
-smarthealth-platform/
-├── api-gateway/           # API Gateway (Express + Apollo + gRPC clients)
-├── services/              # 9 microservices
-│   ├── patient-service/   # Patient (SQLite3, Kafka producer)
-│   ├── doctor-service/    # Doctor (SQLite3, Kafka producer)
-│   ├── rendezvous-service/# Rendez-vous (SQLite3, Kafka producer)
-│   ├── medical-record-service/ # Dossiers (RxDB, Kafka consumer/producer)
-│   ├── payment-service/   # Paiements (SQLite3, Kafka consumer/producer)
-│   ├── inventory-service/ # Stock (SQLite3, Kafka consumer/producer)
-│   ├── laboratory-service/# Tests (SQLite3, Kafka producer)
-│   ├── notification-service/# Notifications (SQLite3, Kafka consumer)
-│   └── alert-service/     # Alertes (SQLite3, Kafka producer)
-├── frontend/              # Interface React
-├── kafka/                 # Configuration Kafka (topics, scripts)
-├── docker-compose.yml     # Orchestration Docker
-├── Dockerfile.gateway     # Image Gateway
-└── Dockerfile.service     # Image générique pour services
-
-
+![alt text](image-1.png)
 
 
 * 👥 Équipe
