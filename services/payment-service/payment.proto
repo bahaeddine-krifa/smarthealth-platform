@@ -1,0 +1,33 @@
+syntax = "proto3";
+package payment;
+
+message Invoice {
+  string id = 1;
+  string patient_id = 2;
+  string appointment_id = 3;
+  double amount = 4;
+  string currency = 5;
+  string status = 6; // pending, paid, failed
+  string created_at = 7;
+  string paid_at = 8;
+}
+
+message CreateInvoiceRequest { string patient_id = 1; string appointment_id = 2; double amount = 3; string currency = 4; }
+message ProcessPaymentRequest { string invoice_id = 1; string payment_method = 2; }
+message GetInvoiceRequest { string id = 1; }
+message GetPatientInvoicesRequest { string patient_id = 1; }
+
+message InvoiceResponse { bool success = 1; string message = 2; Invoice invoice = 3; }
+message InvoicesResponse { bool success = 1; repeated Invoice invoices = 2; }
+message PaymentResponse { bool success = 1; string message = 2; string transaction_id = 3; }
+message OperationResponse { bool success = 1; string message = 2; }
+
+service PaymentService {
+  rpc CreateInvoice(CreateInvoiceRequest) returns (InvoiceResponse);
+  rpc ProcessPayment(ProcessPaymentRequest) returns (PaymentResponse);
+  rpc GetInvoice(GetInvoiceRequest) returns (InvoiceResponse);
+  rpc GetPatientInvoices(GetPatientInvoicesRequest) returns (InvoicesResponse);
+  rpc ListInvoices(Empty) returns (InvoicesResponse);
+}
+
+message Empty {}

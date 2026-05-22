@@ -1,0 +1,12 @@
+[
+  {
+    "id": "REC-1778939736339",
+    "patient_id": "PAT-1778937868111",
+    "doctor_id": "DOC-1778938425576",
+    "diagnosis": "Hypertension légère",
+    "prescriptions": "Amlodipine 5mg",
+    "allergies": "Pénicilline, Ibuprofène",
+    "created_at": "2026-05-16T13:55:36.339Z",
+    "updated_at": "2026-05-16T20:11:31.175Z"
+  }
+]

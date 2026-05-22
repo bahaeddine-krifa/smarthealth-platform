@@ -1,0 +1,72 @@
+// rendezvous.proto
+syntax = "proto3";
+package rendezvous;
+
+// Messages
+message Appointment {
+  string id = 1;
+  string patient_id = 2;
+  string patient_name = 3;
+  string doctor_name = 4;
+  string appointment_date = 5;
+  string appointment_time = 6;
+  string reason = 7;
+  string status = 8; // pending, confirmed, cancelled, completed
+  string created_at = 9;
+  string updated_at = 10;
+}
+
+message BookAppointmentRequest {
+  string patient_id = 1;
+  string patient_name = 2;
+  string doctor_name = 3;
+  string appointment_date = 4;
+  string appointment_time = 5;
+  string reason = 6;
+}
+
+message GetAppointmentRequest {
+  string id = 1;
+}
+
+message GetAppointmentsByPatientRequest {
+  string patient_id = 1;
+}
+
+message CancelAppointmentRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message UpdateAppointmentStatusRequest {
+  string id = 1;
+  string status = 2;
+}
+
+message AppointmentResponse {
+  bool success = 1;
+  string message = 2;
+  Appointment appointment = 3;
+}
+
+message AppointmentsResponse {
+  bool success = 1;
+  repeated Appointment appointments = 2;
+}
+
+message OperationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Service
+service RendezVousService {
+  rpc BookAppointment(BookAppointmentRequest) returns (AppointmentResponse);
+  rpc GetAppointment(GetAppointmentRequest) returns (AppointmentResponse);
+  rpc GetAppointmentsByPatient(GetAppointmentsByPatientRequest) returns (AppointmentsResponse);
+  rpc CancelAppointment(CancelAppointmentRequest) returns (OperationResponse);
+  rpc UpdateAppointmentStatus(UpdateAppointmentStatusRequest) returns (OperationResponse);
+  rpc ListAppointments(Empty) returns (AppointmentsResponse);
+}
+
+message Empty {}

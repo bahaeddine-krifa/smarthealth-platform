@@ -1,0 +1,87 @@
+// alert.proto
+syntax = "proto3";
+package alert;
+
+// Messages
+message Alert {
+  string id = 1;
+  string patient_id = 2;
+  string patient_name = 3;
+  string alert_type = 4; // reminder, emergency, follow_up, medication
+  string severity = 5; // low, medium, high, critical
+  string title = 6;
+  string description = 7;
+  string status = 8; // pending, acknowledged, resolved
+  string triggered_at = 9;
+  string resolved_at = 10;
+}
+
+message TriggerAlertRequest {
+  string patient_id = 1;
+  string patient_name = 2;
+  string alert_type = 3;
+  string severity = 4;
+  string title = 5;
+  string description = 6;
+}
+
+message GetAlertRequest {
+  string id = 1;
+}
+
+message GetAlertsByPatientRequest {
+  string patient_id = 1;
+}
+
+message AcknowledgeAlertRequest {
+  string id = 1;
+  string notes = 2;
+}
+
+message ResolveAlertRequest {
+  string id = 1;
+  string resolution_notes = 2;
+}
+
+message AlertResponse {
+  bool success = 1;
+  string message = 2;
+  Alert alert = 3;
+}
+
+message AlertsResponse {
+  bool success = 1;
+  repeated Alert alerts = 2;
+}
+
+message OperationResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+// Kafka Events (pour documentation)
+message PatientCreatedEvent {
+  string patient_id = 1;
+  string name = 2;
+  string email = 3;
+  string timestamp = 4;
+}
+
+message AppointmentConfirmedEvent {
+  string appointment_id = 1;
+  string patient_id = 2;
+  string appointment_date = 3;
+  string timestamp = 4;
+}
+
+// Service
+service AlertService {
+  rpc TriggerAlert(TriggerAlertRequest) returns (AlertResponse);
+  rpc GetAlert(GetAlertRequest) returns (AlertResponse);
+  rpc GetAlertsByPatient(GetAlertsByPatientRequest) returns (AlertsResponse);
+  rpc AcknowledgeAlert(AcknowledgeAlertRequest) returns (OperationResponse);
+  rpc ResolveAlert(ResolveAlertRequest) returns (OperationResponse);
+  rpc ListAlerts(Empty) returns (AlertsResponse);
+}
+
+message Empty {}
